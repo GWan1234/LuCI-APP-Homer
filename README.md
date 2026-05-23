@@ -1,6 +1,6 @@
 # Homer 个人主页导航插件 for OpenWrt
 
-本插件是为实现移植 [bastienwirtz/homer](https://github.com/bastienwirtz/homer) 个人主页导航，用于 **OpenWrt** 系统。
+本插件是为实现移植 <a href="https://github.com/bastienwirtz/homer" target="_blank">bastienwirtz/homer</a> 个人主页导航，用于 **OpenWrt** 系统。
 
 由于 Homer 是一个**静态网页架构**，无需任何运行时更改，原作者的运行基础虽然是 Docker，但实际上任何平台均可部署——因为它仅仅是一个网页。
 
@@ -11,7 +11,7 @@
 3. 进入 Homer 管理界面后，提供以下操作：  
 
    - **A. 原始下载路径**  
-     可跳转至 `bastienwirtz/homer` 官方仓库，下载最新网页模板  
+     可跳转至 <a href="https://github.com/bastienwirtz/homer" target="_blank">bastienwirtz/homer</a> 官方仓库，下载最新网页模板  
    - **B. 导出已个性化设置的网页**  
      将 `/www/homer` 下已修改的页面导出为 `.zip` 压缩包  
      > 个性化修改需借助第三方工具，本插件仅做导入/导出作用  
