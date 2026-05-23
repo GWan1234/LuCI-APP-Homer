@@ -41,6 +41,25 @@ define Package/luci-app-homer/install
 	$(CP) ./files/usr/lib/lua/luci/controller/homer.lua $(1)/usr/lib/lua/luci/controller/
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/homer
 	$(CP) ./files/usr/lib/lua/luci/view/homer/homer_manager $(1)/usr/lib/lua/luci/view/homer/
+
+	# 安装通用脚本 setup.sh（物理文件，复杂逻辑在这里）
+	$(INSTALL_DIR) $(1)/usr/lib/homer
+	$(INSTALL_BIN) ./files/usr/lib/homer/setup.sh $(1)/usr/lib/homer/
+
+	# 生成 init.d 脚本（统一入口：刷机后开机 + apk/opkg 安装后开机均通过此路径）
+	$(INSTALL_DIR) $(1)/etc/init.d
+	echo '#!/bin/sh /etc/rc.common' > $(1)/etc/init.d/homer-autosetup
+	echo '' >> $(1)/etc/init.d/homer-autosetup
+	echo 'START=95' >> $(1)/etc/init.d/homer-autosetup
+	echo 'STOP=15' >> $(1)/etc/init.d/homer-autosetup
+	echo 'USE_PROCD=0' >> $(1)/etc/init.d/homer-autosetup
+	echo '' >> $(1)/etc/init.d/homer-autosetup
+	echo 'start() {' >> $(1)/etc/init.d/homer-autosetup
+	echo '    /usr/lib/homer/setup.sh' >> $(1)/etc/init.d/homer-autosetup
+	echo '}' >> $(1)/etc/init.d/homer-autosetup
+	chmod 755 $(1)/etc/init.d/homer-autosetup
+	$(INSTALL_DIR) $(1)/etc/rc.d
+	$(LN) ../init.d/homer-autosetup $(1)/etc/rc.d/S95homer-autosetup
 endef
 
 $(eval $(call BuildPackage,luci-app-homer))
