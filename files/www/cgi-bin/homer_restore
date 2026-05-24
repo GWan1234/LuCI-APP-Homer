@@ -41,38 +41,53 @@ end
 
 -- Parse multipart/form-data, extract file content
 local function parse_multipart(body, boundary)
-    local b = "\r\n--" .. boundary
+    -- Body parts are separated by "--" .. boundary
+    -- First part starts with "--" .. boundary .. "\r\n"
+    -- Last part ends with "--" .. boundary .. "--\r\n"
+    local sep = "--" .. boundary
     local pos = 1
-    local file_data = nil
 
     while pos <= #body do
-        local s, e = body:find(b, pos, true)
+        -- Find next boundary
+        local s, e = body:find(sep, pos, true)
         if not s then break end
 
-        -- After this boundary, parse headers
-        local hdr_start = e + 1
+        -- Check if this is the final boundary (ends with "--")
+        local after = body:sub(e + 1, e + 2)
+        if after == "--" then
+            break -- final boundary, done
+        end
+
+        -- After boundary should be "\r\n", then headers
+        if body:sub(e + 1, e + 2) ~= "\r\n" then
+            pos = e + 1
+            break
+        end
+
+        local hdr_start = e + 3
         local hdr_end = body:find("\r\n\r\n", hdr_start, true)
         if not hdr_end then break end
 
         local headers = body:sub(hdr_start, hdr_end - 1)
 
-        -- Find next boundary (end of this part's content)
-        local next_s, next_e = body:find(b, hdr_end + 4, true)
+        -- Find next boundary (start of next part or end)
+        local next_s, next_e = body:find("\r\n" .. sep, hdr_end + 4, true)
         local content
         if next_s then
             content = body:sub(hdr_end + 4, next_s - 1)
         else
-            -- Last part: ends with --\r\n
-            local last_s, last_e = body:find(b .. "--", hdr_end + 4, true)
-            if last_s then
-                content = body:sub(hdr_end + 4, last_s - 1)
+            -- Try finding final boundary
+            local final_s, final_e = body:find("\r\n" .. sep .. "--", hdr_end + 4, true)
+            if final_s then
+                content = body:sub(hdr_end + 4, final_s - 1)
             else
+                -- No next boundary found, read to end
                 content = body:sub(hdr_end + 4)
             end
         end
 
-        -- Strip trailing \r\n from content (belongs to boundary delimiter)
-        if content and #content > 0 and content:sub(-2) == "\r\n" then
+        -- Strip trailing \r\n from content
+        if content and #content >= 2 and content:sub(-2) == "\r\n" then
             content = content:sub(1, -3)
         end
 
@@ -82,7 +97,7 @@ local function parse_multipart(body, boundary)
             return content, filename
         end
 
-        pos = (next_s or last_s) and (next_s or last_s) + 1 or (s + 1)
+        pos = (next_s or final_s) and (next_s or final_s) + 1 or (s + 1)
     end
 
     return nil
